@@ -39,6 +39,72 @@
             opacity: 0.9;
         }
 
+        .dashboard-link {
+            display: inline-block;
+            margin-top: 18px;
+            padding: 12px 18px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            text-decoration: none;
+            transition: background 0.2s ease;
+        }
+
+        .dashboard-link:hover {
+            background: rgba(255,255,255,0.25);
+        }
+
+        .notification-banner {
+            background: rgba(255, 255, 255, 0.92);
+            border: 1px solid rgba(102, 126, 234, 0.4);
+            color: #1f2937;
+            border-radius: 12px;
+            padding: 18px 22px;
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+        }
+
+        .notification-banner p {
+            margin: 0;
+            font-size: 0.96rem;
+            line-height: 1.5;
+            color: #1f2937;
+        }
+
+        .notification-banner .notification-severity {
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            padding: 8px 12px;
+            border-radius: 999px;
+        }
+
+        .notification-banner .notification-severity.info {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .notification-banner .notification-severity.high,
+        .notification-banner .notification-severity.critical {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .notification-banner .notification-severity.medium {
+            background: #fef3c7;
+            color: #b45309;
+        }
+
+        .notification-banner .notification-severity.low {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
         .demo-section {
             background: white;
             border-radius: 12px;
@@ -362,15 +428,23 @@
         <header>
             <h1>🚀 PrismCorp Advisor Core</h1>
             <p>LLM-Driven Supply Chain Decision System - Demo</p>
+            <a class="dashboard-link" href="/dashboard">View KPI Dashboard</a>
         </header>
+
+        <div id="notificationBanner" class="notification-banner" style="display: none;">
+            <div>
+                <strong>Notification</strong>
+                <p id="notificationBannerMessage"></p>
+            </div>
+            <span id="notificationBannerSeverity" class="notification-severity info">INFO</span>
+        </div>
 
         <!-- Demo Incidents -->
         <div class="demo-section">
             <h2>📋 Select Incident to Analyze</h2>
             <div class="incident-selector">
-                <select id="incidentSelect">
-                    <option value="INC-2026-05-31-001">INC-2026-05-31-001 - Singapore Port Congestion (Microchip A3)</option>
-                    <option value="INC-2026-05-31-002">INC-2026-05-31-002 - Shanghai On-Time (Capacitor XL)</option>
+                <select id="incidentSelect" onchange="notifySelection('incident-selection', this.value)">
+                    <option value="">Loading incidents...</option>
                 </select>
                 <button onclick="analyzeIncident()">Analyze Incident</button>
                 <button class="secondary" onclick="clearResults()">Clear</button>
@@ -498,11 +572,42 @@
     <script>
         let currentLogId = null;
         let currentIncidentId = null;
+        let incidentOptions = [];
+
+        async function loadIncidentOptions() {
+            try {
+                const response = await fetch('/api/demo/incidents');
+                const data = await response.json();
+                const select = document.getElementById('incidentSelect');
+
+                incidentOptions = data.incidents || [];
+                select.innerHTML = '';
+
+                if (!incidentOptions.length) {
+                    select.innerHTML = '<option value="">No incidents available</option>';
+                    return;
+                }
+
+                incidentOptions.forEach(incident => {
+                    const option = document.createElement('option');
+                    option.value = incident.incident_id;
+                    option.textContent = `${incident.incident_id} - ${incident.port} (${incident.summary || incident.product || incident.severity})`;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                const select = document.getElementById('incidentSelect');
+                select.innerHTML = '<option value="">Unable to load incidents</option>';
+                console.warn('Failed to load incident options:', error);
+            }
+        }
 
         async function analyzeIncident() {
             const select = document.getElementById('incidentSelect');
             currentIncidentId = select.value;
-            const shipmentId = currentIncidentId === 'INC-2026-05-31-001' ? 'PO-789456' : 'PO-654321';
+            const selectedIncident = incidentOptions.find(item => item.incident_id === currentIncidentId) || {};
+            const shipmentId = selectedIncident.shipment_id || '';
+
+            await notifySelection('analyze-incident', currentIncidentId);
 
             // Show loading
             document.getElementById('loading').style.display = 'block';
@@ -510,7 +615,7 @@
             document.getElementById('approvalMessage').innerHTML = '';
 
             try {
-                const response = await fetch('http://localhost:5000/api/incidents/analyze', {
+                const response = await fetch('/api/incidents/analyze', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -583,8 +688,13 @@
             const notes = prompt('Add approval notes (optional):', 'Approved. Proceed with recommendation.');
             if (notes === null) return;
 
+            await notifySelection('approve-recommendation', currentIncidentId, {
+                action: 'approve',
+                notes,
+            });
+
             try {
-                const response = await fetch(`http://localhost:5000/api/incidents/${currentIncidentId}/approve`, {
+                const response = await fetch(`/api/incidents/${currentIncidentId}/approve`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -610,11 +720,15 @@
 
         function rejectRecommendation() {
             if (!currentLogId) return;
-
             const notes = prompt('Why are you rejecting this recommendation?', 'Cost impact too high. Need alternative analysis.');
             if (notes === null) return;
 
-            fetch(`http://localhost:5000/api/incidents/${currentIncidentId}/reject`, {
+            notifySelection('reject-recommendation', currentIncidentId, {
+                action: 'reject',
+                notes,
+            });
+
+            fetch(`/api/incidents/${currentIncidentId}/reject`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -634,9 +748,54 @@
             });
         }
 
+        async function notifySelection(action, incidentId, metadata = {}) {
+            try {
+                const response = await fetch('/api/notifications', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        title: `User action: ${action}`,
+                        message: `User selected ${action} for incident ${incidentId}`,
+                        severity: 'info',
+                        channel: 'dashboard',
+                        metadata: {
+                            incident_id: incidentId,
+                            action,
+                            ...metadata,
+                        },
+                    }),
+                });
+
+                const data = await response.json();
+                if (data.status === 'success' && data.notification) {
+                    showNotificationBanner(data.notification);
+                }
+            } catch (error) {
+                console.warn('Notification failed:', error);
+            }
+        }
+
+        function showNotificationBanner(notification) {
+            const banner = document.getElementById('notificationBanner');
+            const message = document.getElementById('notificationBannerMessage');
+            const severity = document.getElementById('notificationBannerSeverity');
+            const severityKey = (notification.severity || 'info').toLowerCase();
+
+            message.textContent = notification.message;
+            severity.textContent = severityKey.toUpperCase();
+            severity.className = `notification-severity ${severityKey}`;
+            banner.style.display = 'flex';
+
+            setTimeout(() => {
+                banner.style.display = 'none';
+            }, 6500);
+        }
+
         async function fetchAuditLog() {
             try {
-                const response = await fetch('http://localhost:5000/api/audit-log');
+                const response = await fetch('/api/audit-log');
                 const data = await response.json();
 
                 if (data.status === 'success' && data.audit_log.length > 0) {
@@ -688,8 +847,9 @@
 
         // Test API on load
         window.onload = async () => {
+            await loadIncidentOptions();
             try {
-                const response = await fetch('http://localhost:5000/api/health');
+                const response = await fetch('/api/health');
                 const data = await response.json();
                 if (data.status !== 'ok') {
                     console.warn('Backend is not responding');

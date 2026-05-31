@@ -111,12 +111,15 @@ class IncidentDecisionEngine:
         routing = self.confidence_threshold.get_routing(confidence_score)
 
         # Log decision
+        # Include incident-level meta (penalty, cost exposure) in the audit log
+        incident_meta = {"penalty": penalty_data}
         log_result = self.audit_logger.log_decision(
             incident_id=incident_id,
             tool_calls=tools_called,
             recommendation=recommendation,
             confidence_score=confidence_score,
             route=routing["route"],
+            incident_meta=incident_meta,
         )
 
         return {

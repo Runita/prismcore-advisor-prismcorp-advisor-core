@@ -6,6 +6,8 @@ from dataclasses import dataclass
 from typing import Dict, Any, List
 from enum import Enum
 import json
+from datetime import datetime
+from src.db import database as db
 
 
 class BudgetStatus(str, Enum):
@@ -162,7 +164,7 @@ class AuditLogger:
     """Gate 4 (v1): Audit logging for all decisions"""
 
     def __init__(self):
-        self.audit_log = []
+        self.audit_log = db.get_audit_log()
 
     def log_decision(
         self,
@@ -171,13 +173,12 @@ class AuditLogger:
         recommendation: Dict[str, Any],
         confidence_score: float,
         route: str,
+        incident_meta: Dict[str, Any] = None,
     ) -> Dict[str, Any]:
         """Log a decision for audit trail"""
         log_entry = {
-            "timestamp": "2026-05-31T12:00:00Z",  # Mock timestamp
             "incident_id": incident_id,
-            "tool_calls_used": tool_calls,
-            "tool_calls_count": len(tool_calls),
+            "tool_calls": tool_calls,
             "recommended_option": recommendation.get("recommended_option"),
             "confidence_score": confidence_score,
             "reasoning": recommendation.get("reasoning"),
@@ -185,29 +186,46 @@ class AuditLogger:
             "cost_delta": recommendation.get("cost_delta"),
             "route": route,
             "status": "pending_approval",
+            "incident_meta": incident_meta or {},
+            "approval_notes": None,
+            "approval_timestamp": None,
+            "created_at": datetime.utcnow().isoformat() + "Z",
         }
 
         self.audit_log.append(log_entry)
+        log_id = db.save_audit_entry(log_entry)
+        log_entry["log_id"] = log_id
 
         return {
             "status": "logged",
-            "log_id": len(self.audit_log),
+            "log_id": log_id,
             "entry": log_entry,
         }
 
     def log_approval(self, log_id: int, approved: bool, notes: str = "") -> Dict[str, Any]:
         """Log human approval/rejection"""
-        if log_id <= 0 or log_id > len(self.audit_log):
+        try:
+            entry = next(entry for entry in self.audit_log if entry.get("log_id") == log_id)
+        except StopIteration:
             return {"status": "error", "message": "Invalid log ID"}
 
-        self.audit_log[log_id - 1]["status"] = "approved" if approved else "rejected"
-        self.audit_log[log_id - 1]["approval_notes"] = notes
-        self.audit_log[log_id - 1]["approval_timestamp"] = "2026-05-31T12:05:00Z"
+        entry["status"] = "approved" if approved else "rejected"
+        entry["approval_notes"] = notes
+        entry["approval_timestamp"] = datetime.utcnow().isoformat() + "Z"
+
+        db.update_audit_entry(
+            log_id,
+            {
+                "status": entry["status"],
+                "approval_notes": notes,
+                "approval_timestamp": entry["approval_timestamp"],
+            },
+        )
 
         return {
             "status": "logged",
             "log_id": log_id,
-            "entry": self.audit_log[log_id - 1],
+            "entry": entry,
         }
 
     def get_audit_log(self) -> List[Dict[str, Any]]:
