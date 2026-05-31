@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PrismCorp Advisor Core - Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .demo-section {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .demo-section h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .incident-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        select, button {
+            padding: 10px 16px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        select {
+            flex: 1;
+            background: #f8f9fa;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            font-weight: 600;
+            min-width: 120px;
+        }
+
+        button:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button.secondary {
+            background: #6c757d;
+            margin-left: 10px;
+        }
+
+        button.secondary:hover {
+            background: #5a6268;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .button-group button {
+            flex: 1;
+        }
+
+        button.approve {
+            background: #28a745;
+        }
+
+        button.approve:hover {
+            background: #218838;
+        }
+
+        button.reject {
+            background: #dc3545;
+        }
+
+        button.reject:hover {
+            background: #c82333;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .result {
+            margin-top: 30px;
+            display: none;
+        }
+
+        .result-section {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 6px;
+        }
+
+        .result-section h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        .data-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .data-item {
+            background: white;
+            padding: 12px;
+            border-radius: 4px;
+            border: 1px solid #e9ecef;
+        }
+
+        .data-label {
+            font-weight: 600;
+            color: #495057;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+
+        .data-value {
+            color: #212529;
+            font-size: 1em;
+        }
+
+        .recommendation-box {
+            background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+            border: 2px solid #667eea;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+
+        .recommendation-option {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .confidence-score {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .reasoning {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 3px solid #667eea;
+            font-style: italic;
+            color: #495057;
+            line-height: 1.6;
+        }
+
+        .routing-info {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+        }
+
+        .routing-info strong {
+            color: #856404;
+        }
+
+        .budget-info {
+            display: flex;
+            justify-content: space-around;
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+        }
+
+        .budget-item {
+            text-align: center;
+        }
+
+        .budget-label {
+            font-size: 0.85em;
+            color: #0056b3;
+            font-weight: 500;
+        }
+
+        .budget-value {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #0056b3;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .status-badge.success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-badge.pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-badge.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+        }
+
+        .success-message {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+        }
+
+        .audit-log {
+            margin-top: 30px;
+        }
+
+        .audit-entry {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+        }
+
+        .audit-timestamp {
+            color: #6c757d;
+            font-size: 0.85em;
+        }
+
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            line-height: 1.5;
+            margin: 15px 0;
+        }
+
+        @media (max-width: 768px) {
+            .data-grid {
+                grid-template-columns: 1fr;
+            }
+
+            header h1 {
+                font-size: 1.8em;
+            }
+
+            .budget-info {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚀 PrismCorp Advisor Core</h1>
+            <p>LLM-Driven Supply Chain Decision System - Demo</p>
+        </header>
+
+        <!-- Demo Incidents -->
+        <div class="demo-section">
+            <h2>📋 Select Incident to Analyze</h2>
+            <div class="incident-selector">
+                <select id="incidentSelect">
+                    <option value="INC-2026-05-31-001">INC-2026-05-31-001 - Singapore Port Congestion (Microchip A3)</option>
+                    <option value="INC-2026-05-31-002">INC-2026-05-31-002 - Shanghai On-Time (Capacitor XL)</option>
+                </select>
+                <button onclick="analyzeIncident()">Analyze Incident</button>
+                <button class="secondary" onclick="clearResults()">Clear</button>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Analyzing incident...</p>
+            </div>
+
+            <!-- Results -->
+            <div class="result" id="result">
+                <!-- Incident Data -->
+                <div class="result-section">
+                    <h3>📦 Incident Data</h3>
+                    <div class="data-grid">
+                        <div class="data-item">
+                            <div class="data-label">Incident ID</div>
+                            <div class="data-value" id="incidentIdDisplay"></div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-label">Shipment ID</div>
+                            <div class="data-value" id="shipmentIdDisplay"></div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-label">Port</div>
+                            <div class="data-value" id="portDisplay"></div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-label">Status</div>
+                            <div class="data-value" id="statusDisplay"></div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-label">Delay Hours</div>
+                            <div class="data-value" id="delayDisplay"></div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-label">Product</div>
+                            <div class="data-value" id="productDisplay"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SLA Penalty -->
+                <div class="result-section">
+                    <h3>⚠️ SLA Penalty</h3>
+                    <div class="data-grid">
+                        <div class="data-item">
+                            <div class="data-label">Total Penalty</div>
+                            <div class="data-value" id="penaltyDisplay" style="color: #dc3545; font-weight: 600;"></div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-label">Penalty Rate</div>
+                            <div class="data-value" id="penaltyRateDisplay"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- LLM Recommendation -->
+                <div class="result-section">
+                    <h3>🤖 LLM Recommendation</h3>
+                    <div class="recommendation-box">
+                        <div class="recommendation-option" id="recommendedOptionDisplay"></div>
+                        <span class="confidence-score" id="confidenceDisplay"></span>
+                        <div class="reasoning" id="reasoningDisplay"></div>
+                        <div style="margin-top: 15px;">
+                            <div class="data-item">
+                                <div class="data-label">Cost Delta</div>
+                                <div class="data-value" id="costDeltaDisplay"></div>
+                            </div>
+                            <div class="data-item">
+                                <div class="data-label">Risk Level</div>
+                                <div class="data-value" id="riskLevelDisplay"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Budget Info -->
+                <div class="result-section">
+                    <h3>💾 Tool-Call Budget Usage</h3>
+                    <div class="budget-info">
+                        <div class="budget-item">
+                            <div class="budget-label">Used</div>
+                            <div class="budget-value" id="budgetUsedDisplay">0</div>
+                        </div>
+                        <div class="budget-item">
+                            <div class="budget-label">Remaining</div>
+                            <div class="budget-value" id="budgetRemainingDisplay">5</div>
+                        </div>
+                        <div class="budget-item">
+                            <div class="budget-label">Status</div>
+                            <div class="budget-value" id="budgetStatusDisplay">OK</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Routing Decision -->
+                <div class="result-section">
+                    <h3>🔀 Routing Decision</h3>
+                    <div class="routing-info" id="routingDisplay"></div>
+                </div>
+
+                <!-- Human Approval -->
+                <div class="result-section">
+                    <h3>✅ Human Approval (Propose-Only v1)</h3>
+                    <p style="margin-bottom: 20px; color: #495057;">The LLM recommendation has been generated. Human review is required before execution.</p>
+                    <div class="button-group">
+                        <button class="approve" onclick="approveRecommendation()">✅ Approve & Execute</button>
+                        <button class="reject" onclick="rejectRecommendation()">❌ Reject & Rethink</button>
+                    </div>
+                    <div id="approvalMessage"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Audit Log -->
+        <div class="demo-section">
+            <h2>📊 Audit Log</h2>
+            <button onclick="fetchAuditLog()" class="secondary">Load Audit Log</button>
+            <div id="auditLogDisplay" style="margin-top: 20px;"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentLogId = null;
+        let currentIncidentId = null;
+
+        async function analyzeIncident() {
+            const select = document.getElementById('incidentSelect');
+            currentIncidentId = select.value;
+            const shipmentId = currentIncidentId === 'INC-2026-05-31-001' ? 'PO-789456' : 'PO-654321';
+
+            // Show loading
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('result').style.display = 'none';
+            document.getElementById('approvalMessage').innerHTML = '';
+
+            try {
+                const response = await fetch('http://localhost:5000/api/incidents/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        incident_id: currentIncidentId,
+                        shipment_id: shipmentId,
+                    }),
+                });
+
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    displayResults(data);
+                    currentLogId = data.audit_log_id;
+                } else {
+                    showError(data.message || 'Analysis failed');
+                }
+            } catch (error) {
+                showError(`Network error: ${error.message}`);
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        function displayResults(data) {
+            const incident = data.incident_data;
+            const rec = data.recommendation;
+            const budget = data.budget_info;
+
+            // Populate incident data
+            document.getElementById('incidentIdDisplay').textContent = data.incident_id;
+            document.getElementById('shipmentIdDisplay').textContent = incident.shipment.shipment_id;
+            document.getElementById('portDisplay').textContent = incident.shipment.port;
+            document.getElementById('statusDisplay').textContent = incident.shipment.status;
+            document.getElementById('delayDisplay').textContent = `${incident.shipment.delay_hours} hours`;
+            document.getElementById('productDisplay').textContent = incident.shipment.product;
+
+            // Populate penalty
+            document.getElementById('penaltyDisplay').textContent = `$${incident.penalty.total_penalty.toLocaleString()}`;
+            document.getElementById('penaltyRateDisplay').textContent = `$${incident.penalty.penalty_rate_per_hour}/hour`;
+
+            // Populate recommendation
+            document.getElementById('recommendedOptionDisplay').textContent = rec.recommended_option;
+            document.getElementById('confidenceDisplay').textContent = `Confidence: ${(rec.confidence_score * 100).toFixed(1)}%`;
+            document.getElementById('reasoningDisplay').textContent = rec.reasoning;
+            document.getElementById('costDeltaDisplay').textContent = `$${rec.cost_delta.toLocaleString()}`;
+
+            const riskColor = rec.risk_level === 'low' ? '#28a745' : rec.risk_level === 'medium' ? '#ffc107' : '#dc3545';
+            document.getElementById('riskLevelDisplay').innerHTML = `<span style="color: ${riskColor}; font-weight: 600;">${rec.risk_level.toUpperCase()}</span>`;
+
+            // Populate budget info
+            document.getElementById('budgetUsedDisplay').textContent = budget.calls_used;
+            document.getElementById('budgetRemainingDisplay').textContent = budget.calls_remaining;
+            document.getElementById('budgetStatusDisplay').textContent = budget.calls_remaining > 0 ? 'OK' : 'EXHAUSTED';
+
+            // Populate routing
+            const routing = data.routing;
+            let routingHTML = `<strong>${routing.route.toUpperCase().replace(/_/g, ' ')}</strong><br>`;
+            routingHTML += `Reason: ${routing.reason}<br>`;
+            if (routing.reviewer) routingHTML += `Reviewer: ${routing.reviewer}`;
+            document.getElementById('routingDisplay').innerHTML = routingHTML;
+
+            document.getElementById('result').style.display = 'block';
+        }
+
+        async function approveRecommendation() {
+            if (!currentLogId || !currentIncidentId) return;
+
+            const notes = prompt('Add approval notes (optional):', 'Approved. Proceed with recommendation.');
+            if (notes === null) return;
+
+            try {
+                const response = await fetch(`http://localhost:5000/api/incidents/${currentIncidentId}/approve`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        log_id: currentLogId,
+                        notes: notes,
+                    }),
+                });
+
+                const data = await response.json();
+                const msgDiv = document.getElementById('approvalMessage');
+
+                if (data.status === 'executed') {
+                    msgDiv.innerHTML = `<div class="success-message">✅ Decision Approved & Executed<br><strong>Message:</strong> ${data.message}</div>`;
+                } else {
+                    msgDiv.innerHTML = `<div class="error-message">❌ Approval Failed<br><strong>Error:</strong> ${data.message}</div>`;
+                }
+            } catch (error) {
+                document.getElementById('approvalMessage').innerHTML = `<div class="error-message">Network error: ${error.message}</div>`;
+            }
+        }
+
+        function rejectRecommendation() {
+            if (!currentLogId) return;
+
+            const notes = prompt('Why are you rejecting this recommendation?', 'Cost impact too high. Need alternative analysis.');
+            if (notes === null) return;
+
+            fetch(`http://localhost:5000/api/incidents/${currentIncidentId}/reject`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    log_id: currentLogId,
+                    notes: notes,
+                }),
+            })
+            .then(r => r.json())
+            .then(data => {
+                const msgDiv = document.getElementById('approvalMessage');
+                msgDiv.innerHTML = `<div class="error-message">❌ Decision Rejected<br><strong>Message:</strong> ${data.message}<br><strong>Feedback:</strong> ${notes}</div>`;
+            })
+            .catch(error => {
+                document.getElementById('approvalMessage').innerHTML = `<div class="error-message">Network error: ${error.message}</div>`;
+            });
+        }
+
+        async function fetchAuditLog() {
+            try {
+                const response = await fetch('http://localhost:5000/api/audit-log');
+                const data = await response.json();
+
+                if (data.status === 'success' && data.audit_log.length > 0) {
+                    let html = `<p style="margin-bottom: 20px; color: #495057;">${data.count} decisions logged</p>`;
+                    data.audit_log.forEach(entry => {
+                        html += `
+                            <div class="audit-entry">
+                                <div class="data-grid">
+                                    <div class="data-item">
+                                        <div class="data-label">Incident ID</div>
+                                        <div class="data-value">${entry.incident_id}</div>
+                                    </div>
+                                    <div class="data-item">
+                                        <div class="data-label">Recommended Option</div>
+                                        <div class="data-value">${entry.recommended_option}</div>
+                                    </div>
+                                    <div class="data-item">
+                                        <div class="data-label">Confidence</div>
+                                        <div class="data-value">${(entry.confidence_score * 100).toFixed(1)}%</div>
+                                    </div>
+                                    <div class="data-item">
+                                        <div class="data-label">Status</div>
+                                        <div class="data-value"><span class="status-badge ${entry.status}">${entry.status.toUpperCase()}</span></div>
+                                    </div>
+                                </div>
+                                <div class="audit-timestamp">Timestamp: ${entry.timestamp}</div>
+                            </div>
+                        `;
+                    });
+                    document.getElementById('auditLogDisplay').innerHTML = html;
+                } else {
+                    document.getElementById('auditLogDisplay').innerHTML = '<p style="color: #6c757d;">No audit log entries yet.</p>';
+                }
+            } catch (error) {
+                document.getElementById('auditLogDisplay').innerHTML = `<div class="error-message">Error loading audit log: ${error.message}</div>`;
+            }
+        }
+
+        function showError(message) {
+            document.getElementById('result').innerHTML = `<div class="error-message">❌ Error: ${message}</div>`;
+            document.getElementById('result').style.display = 'block';
+        }
+
+        function clearResults() {
+            document.getElementById('result').style.display = 'none';
+            document.getElementById('approvalMessage').innerHTML = '';
+            currentLogId = null;
+        }
+
+        // Test API on load
+        window.onload = async () => {
+            try {
+                const response = await fetch('http://localhost:5000/api/health');
+                const data = await response.json();
+                if (data.status !== 'ok') {
+                    console.warn('Backend is not responding');
+                }
+            } catch (error) {
+                console.warn('Backend unavailable. Make sure to run: python src/api/app.py');
+            }
+        };
+    </script>
+</body>
+</html>
