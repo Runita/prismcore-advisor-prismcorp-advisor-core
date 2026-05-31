@@ -12,6 +12,7 @@ pip install -r requirements.txt
 
 ```bash
 python src/api/app.py
+
 ```
 
 The Flask API will start on `http://localhost:5000`

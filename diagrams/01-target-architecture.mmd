@@ -1,0 +1,46 @@
+%% Target Architecture — 4 layers
+%% Render: `mmdc -i 01-target-architecture.mmd -o 01-target-architecture.png`
+flowchart TB
+    subgraph L4["Layer 4 — Experience"]
+        UI["SAP Build Apps / Joule<br/>Conversational UI + Approval flows"]
+    end
+
+    subgraph L3["Layer 3 — Agentic AI (SAP Generative AI Hub + AI Core)"]
+        ORCH["Orchestrator Agent<br/>(Planner LLM)"]
+        DA["Data Retrieval<br/>Agent"]
+        RA["Risk Analyst<br/>Agent"]
+        AG["Alternatives<br/>Generator Agent"]
+        IS_A["Impact Scorer<br/>Agent"]
+        CA["Communication<br/>Agent"]
+        ORCH --> DA & RA & AG & IS_A & CA
+    end
+
+    subgraph L2["Layer 2 — Integration (SAP Integration Suite)"]
+        IFLOW["iFlows<br/>(sync pulls)"]
+        EM["Event Mesh<br/>(real-time events)"]
+        APIM["API Management<br/>(governed exposure)"]
+    end
+
+    subgraph L1["Layer 1 — Data Foundation (SAP Business Data Cloud)"]
+        DP["Data Products<br/>sc.order, sc.shipment,<br/>sc.inventory, sc.supplier..."]
+        DS["Datasphere<br/>(storage / SQL / federation)"]
+        VS["Vector Store<br/>(historical incidents)"]
+    end
+
+    subgraph SRC["Sources"]
+        S1["5 × SAP ERPs"]
+        S2["WMS"]
+        S3["Logistics Tracker"]
+        S4["Retail / HR / Port Advisories"]
+    end
+
+    UI --> ORCH
+    DA --> DP
+    DA --> VS
+    L3 --> APIM
+    APIM --> IFLOW & EM
+    IFLOW --> S1 & S2 & S4
+    EM --> S3
+    IFLOW --> DS
+    EM --> DS
+    DS --> DP

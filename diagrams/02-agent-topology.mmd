@@ -1,0 +1,21 @@
+%% Agent topology — orchestrator + sub-agents + tools + HITL
+flowchart TB
+    EVT["Event<br/>(port congestion,<br/>ETA slip)"] --> ORCH
+    USR["User query<br/>via Joule"] --> ORCH
+
+    ORCH["Orchestrator<br/>(Planner LLM)"]
+
+    ORCH -->|plan + delegate| DA["Data Retrieval Agent"]
+    ORCH --> RA["Risk Analyst Agent"]
+    ORCH --> AG["Alt Generator Agent"]
+    ORCH --> IS_A["Impact Scorer Agent"]
+    ORCH --> CA["Communication Agent"]
+
+    DA -->|SQL / OData| BDC[("BDC Data Products")]
+    RA -->|rules + LLM| BDC
+    AG -->|tool: find_alt_suppliers,<br/>find_alt_routes,<br/>find_stock_transfers| BDC
+    IS_A -->|cost / SLA / tier model| BDC
+    CA -->|drafts notes| EMAIL["Email / Teams / Slack"]
+
+    ORCH --> HITL["Human-in-the-Loop<br/>(Supply Chain Head)"]
+    HITL -->|approve| EXEC["SAP Integration Suite<br/>→ ERPs (execute)"]

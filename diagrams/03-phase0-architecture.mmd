@@ -1,0 +1,31 @@
+%% Phase 0 — single-entity BDC + Integration Suite activation
+flowchart TB
+    SAC["SAP Analytics Cloud<br/>Supply-chain dashboard<br/>(Phase 0 deliverable)"]
+
+    subgraph BDC["SAP Business Data Cloud"]
+        SEM["Semantic Layer / Data Products<br/>sc.order, sc.delivery, sc.inventory_position,<br/>sc.shipment_tracking, sc.supplier, sc.warehouse_stock,<br/>sc.external_signal"]
+        DSP["Datasphere<br/>(storage + SQL + federation)"]
+        SEM --- DSP
+    end
+
+    subgraph IS["SAP Integration Suite"]
+        RF["Replication Flow<br/>(CDC, batch)"]
+        EM["Event Mesh<br/>topics: shipment.*, port.advisory"]
+        IF["Cloud Integration<br/>iFlows (REST polls)"]
+        APIM["API Management<br/>governed exposure"]
+    end
+
+    subgraph SRC["Sources"]
+        S4["SAP S/4HANA<br/>Entity-APAC"]
+        LOG["Logistics Tracker<br/>(webhook)"]
+        WMS["WMS<br/>(REST API)"]
+        PORT["Port Advisories<br/>(RSS / Email)"]
+    end
+
+    S4 --> RF --> DSP
+    LOG --> EM --> DSP
+    WMS --> IF --> DSP
+    PORT --> IF --> DSP
+    DSP --> SEM
+    SEM --> APIM
+    SEM --> SAC

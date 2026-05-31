@@ -124,10 +124,29 @@ prismcorp-advisor-core/
 
 ## Getting Started
 
-1. Read [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for detailed design
-2. Review [`docs/adr/0001-llm-decision-system.md`](docs/adr/0001-llm-decision-system.md) for decision context
-3. Check [`src/`](src/) for implementation templates
-4. Deploy with [`deployment/docker-compose.yml`](deployment/docker-compose.yml)
+1. Install the project in editable mode from the repository root:
+   ```bash
+   python -m pip install -e .
+   ```
+2. Run the Flask backend from the repository root:
+   ```bash
+   python -m src.api.app
+   ```
+3. If you need to import classes directly from a Python shell, run it from the repository root or set `PYTHONPATH` to the repo root:
+   - Windows PowerShell:
+     ```powershell
+     $env:PYTHONPATH = Get-Location
+     python
+     ```
+   - macOS/Linux:
+     ```bash
+     export PYTHONPATH="$PWD"
+     python
+     ```
+4. Read [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for detailed design
+5. Review [`docs/adr/0001-llm-decision-system.md`](docs/adr/0001-llm-decision-system.md) for decision context
+6. Check [`src/`](src/) for implementation templates
+7. Deploy with [`deployment/docker-compose.yml`](deployment/docker-compose.yml)
 
 ## Contributing
 

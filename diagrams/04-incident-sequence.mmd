@@ -1,0 +1,27 @@
+%% Phase 1 POC — end-to-end incident sequence (ORDER-7842)
+sequenceDiagram
+    autonumber
+    participant EXT as Port Advisory Source
+    participant EM as Event Mesh
+    participant ORCH as Orchestrator Agent
+    participant DA as Data Retrieval
+    participant AG as Alt Generator
+    participant IS_A as Impact Scorer
+    participant UI as Joule UI
+    participant USR as Supply Chain Head
+    participant ISv as Integration Suite
+
+    EXT->>EM: port.advisory event
+    EM->>ORCH: trigger
+    ORCH->>ORCH: plan (retrieve → assess → generate → score)
+    ORCH->>DA: get_order(ORDER-7842)
+    DA-->>ORCH: order + customer tier + inventory across entities
+    ORCH->>AG: find_alternatives(order, context)
+    AG-->>ORCH: 3 options (air-freight, stock transfer, alt supplier)
+    ORCH->>IS_A: score(options, weights)
+    IS_A-->>ORCH: ranked options with rationale
+    ORCH->>UI: present ranked options
+    UI->>USR: "Recommend Option A (air-freight, +$22k, on-time)"
+    USR->>UI: approve Option A
+    UI->>ISv: execute reroute via governed API
+    ISv-->>UI: confirmation logged
