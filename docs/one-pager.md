@@ -41,7 +41,7 @@ Zero net-new vendors. Every component pre-approved across the 5 EA boards.
 | **0 — Foundation** | 6 weeks | BDC + IS active for 1 entity (APAC). 7 data products. SAC dashboard. Read-only. |
 | **1 — POC** | 6–8 weeks | Single decision class ("shipment delayed — options?"). Propose-only. |
 | **2 — Scale** | 16 weeks | Expand to 5 entities; learning loop from resolved cases. |
-| **3 — Autonomy** | 12 weeks | Selective autonomy for low-risk decisions only. |
+| **3 — Autonomy** | 24 weeks | Selective autonomy for low-risk decisions only. |
 
 ---
 
